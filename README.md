@@ -23,55 +23,38 @@ The original paper's authors are Fuli Feng, Huimin Chen, Xiangnan He, Ji Ding, M
 
 This paper develops a new method of involving adversarial training into the training process of stock daily movement prediction. The paper aims to predict whether the price of a stock will be up or down at the end of the next day compared to end of the current day. The key innovation of this paper is that it proposes to employ adversarial training to improve the generalization ability of the prediction model. Specifically, it develops a method to add adversarial training into an Attentive LSTM (which is proposed for the same task in previous literatures). The rationality of adversarial training in stock price movement prediction is that one primary group of the typical input features to stock prediction tasks are typically based on stock price, which is a stochastic variable and continuously changed with time by nature. Thus, normal training with static price-based features can easily overfit the data, being insufficient to obtain reliable models. Thus, to address this problem, the authors suggest adding perturbations to simulate the stochasticity of price variable, and train the model to work well under small but intentional perturbations.
 
-## Motivation
-
-Deep Learning's application in Finance has always been one of the most complicated research area for Deep Learning. While reading various papers that focus on Deep Learning methods on Quantitative Finance applications, this paper about [Stock-Move-Prediction-with-Adversarial-Training-Replicate-Project](https://arxiv.org/pdf/1810.09936.pdf) catches my attention.
-
-
-Nowadays, most companies in Quantitative Finance field uses limit orderbook data to conduct all kinds of analysis. It provides much more information than traditional one point data. High frequency limit orderbook data is essential for companies which conduct high frequency trading and the importance has been growing at an extremely fast speed. As an individal who is very passionate about machine learning's applications in finance data of Level II or above, I would like to fully understand the DeepLOB model and the authors' intensions behind each design component. At the same time, I would like to further enhance my deep learning application skills. Thus, I conducted this replicate project.
-
-
 ## Model Details
 
-The model takes in the limit orderbook data of one specific stock as input and conduct a 3-class prediction for the stock's mid-price movement. The three classes are 'Down', 'Hold' and 'Up'. There has been previous researches which focus on limit orderbook data. However, most of them applied static feature extract method that mainly based on domain expertise and conventions. These static methods include Linear Discriminant Analysis (LDA) and Principal Component Analysis (PCA), etc. 
-
-The DeepLOB model intead applies a dynamic feature ectraction approach through applying Deep Learning architecture (CNN + Inception Module). It also uses an additional LSTM to capture additional dependence that is not captured by the CNN + Inception Module.
+### General Task
+The model takes in daily price data (including daily open price, daily close price, daily adjusted close price) of a group of selected stocks (not individual stock). The data is normalized beforehand within the individual stock. Then the model treats all these normalized data from different stocks in the same way. Its aim is to train a model that could be generally used for any stock to predict whether the stock's next day's close price will be up (>0.55% movement up) or down (<-0.50% movement down). The choice of these two thresholds are not specified.
 
 ### Inputs
 
 #### Raw Data
-The DeepLOB model takes limit orderbook data as inputs, specifically, at each time point, it takes in a limit orderbook snippet - the lowest 10 ask levels and the highest 10 bid levels. Each level has one price data and one size data. Thus, at each time point, there are 40 numbers. Below is am example of how the orderbook looks like at one time point (10 levels are shown here in this example)
 
-![LIMIT ORDERBOOK EXAMPLE](./src/images/limit_orderbook_example.png)
+The raw data used is the stock daily level price data of a basket of stocks. Specifically, for each stock, daily open price, close price and adjusted price (three price values) are used between two specific dates depend on the dataset. The paper uses two different benchmark datasets used by previous papers. ACL18 & KDD17. These two datasets are the ones used by two previous papers.
 
+#### ACL18 dataset
 
-The authors of the model use a lookback period of 100 timesteps at each time step. Thus at each time step, the input matrix has a dimension of 100 x 40.
+* ACL18 contains historical data from Jan-01-2014 to Jan01-2016 of 88 high-trade-volume-stocks in NASDAQ and NYSE markets
+* Used in the paper Xu and Cohen, 2018
 
-Thus the input size of the model is N x 100 x 40 x 1 (N is the number of timesteps used as input)
+#### KDD17 dataset
 
-The paper authors used two different datasets: FI-2010 and London Stock Exchange (LSE) limit orderbook data.
+* KDD17 contains a longer history ranging from Jan-01-2007 to Jan-01-2016 of 50 stocks in U.S. markets
+* Used in the paper Zhang et al., 2017
 
-#### FI-2010 dataset
+#### Data Labelling
 
-* FI-2010 is a public benchmark dataset of HFT LOB data and extracted time series data for five stocks from the Nasdaq Nordic stock market for a time period of 10 consecutive days. 
-* The timestep distance between two data points are in average < 1 second. 
-* The dataset is pre-normalized using z-score normalization.
+The paper applies the exact same method to the two dataset to label them.
 
-#### LSE dataset
+The movement is calculated as the difference between the current day and next day's adjusted close price as shown in the equation below:
 
-* LSE dataset is not a publicly accessible dataset. 
-* The stocks involved has much higher liqudity than the 5 stocks in FI-2010 dataset
-* The timestep distance between two data points are samller and in average 0.192 seocnd
-* The dataset is not pre-normalized.
+![label_equation](./src/images/label_equation.png)
 
-#### Data Labeling
-Following quantities are calculated using corresponding equations & labels are generated.
-| mid-price | previous k timesteps avg mid-price | future k timesteps avg mid-price| move pct | label
-|   -- | ---- | ------- | - | - |
-|  p | m- | m+ | l | y |
+If the movement (from current day to next day's adjusted close) is above 0.55%, it is labelled as +1 if the movement is below -0.5%,, it is labelled as -1. Otherwise, it is labelled as 0.
 
-
-![labelling](./src/images/labelling.png)
+The days that have the label (from current day to next day's adjusted close) 
 
 
 #### Data Normalization
