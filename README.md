@@ -26,7 +26,7 @@ This paper develops a new method of involving adversarial training into the trai
 ## Model Details
 
 ### General Task
-The model takes in daily price data (including daily open price, daily close price, daily adjusted close price) of a group of selected stocks (not individual stock). The data is normalized beforehand within the individual stock. Then the model treats all these normalized data from different stocks in the same way. Its aim is to train a model that could be generally used for any stock to predict whether the stock's next day's close price will be up (>0.55% movement up) or down (<-0.50% movement down). The choice of these two thresholds are not specified.
+The model takes in daily price data (including daily open price, close price, high, low and adjusted close price) of a group of selected stocks (not individual stock). The data is normalized beforehand within the individual stock. Then the model treats all these normalized data from different stocks in the same way. Its aim is to train a model that could be generally used for any stock to predict whether the stock's next day's close price will be up (>0.55% movement up) or down (<-0.50% movement down). The choice of these two thresholds are not specified.
 
 ### Inputs
 
@@ -54,13 +54,26 @@ The movement is calculated as the difference between the current day and next da
 
 If the movement (from current day to next day's adjusted close) is above 0.55%, it is labelled as +1 if the movement is below -0.5%,, it is labelled as -1. Otherwise, it is labelled as 0.
 
-The days that have the label (from current day to next day's adjusted close) 
+The days that have the label (from current day to next day's adjusted close) 0 are removed from the data and not used.
 
+#### Feature Generation & Normalization
 
-#### Data Normalization
+The paper applies the exact same method for feature generation & normalization as well.
 
-* FI-2010 dataset is pre-noralized 
-* LSE dataset: Each trading day's price and size at each level is normalized using the previous 5 trading days' price and size separately.
+Firstly, instead of using the raw price numbers, the authors used 11 technical features that are commonly used in other papers. Here are the 11 features used:
+
+1. c_open <- movement of the day (from open to close)
+2. c_high <- not specified by the authors, according to the name, it is a feature related to daily high price
+3. c_low <- not specified by the authors, according to the name, it is a feature related to daily low price
+4. n_close <- movement from last day's close to current day's close price
+5. n_adj_close <- movement from last day's adjusted close price to current day's adjusted close price
+6-11. k-day (k=5,10,15,20,25,30) <- movement from past k day average adjusted close to current day's adjusted close price.
+
+Here is a table of how the authors showcase them in the original paper.
+
+![features](./src/images/features)
+
+Since the authors did not specify the calculation method of c_high and c_low and there is no information from source code as well (the data is preprocessed) so this creates difficulty for using other datasets for additional experiment.
 
 
 ### Model Structure
