@@ -74,7 +74,7 @@ The paper applies the exact same method to the two dataset to label them.
 
 The movement is calculated as the difference between the current day and next day's adjusted close price as shown in the equation below:
 
-![label_equation](./src/images/label_equation.png)
+![label formula](./src/images/label formula.png)
 
 If the movement (from current day to next day's adjusted close) is above 0.55%, it is labelled as +1 if the movement is below -0.5%,, it is labelled as -1. Otherwise, it is labelled as 0.
 
