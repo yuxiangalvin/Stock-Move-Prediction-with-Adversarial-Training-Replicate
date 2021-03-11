@@ -121,7 +121,7 @@ Here is a picture that shows how adversarial training is applied here. As stated
 
 The following two formulas show how e_adv is generated from the original e.
 
-![perturbation_formula](./src/images/perturbation_formula.png)
+![adversarial_formula](./src/images/adversarial_formula.png)
 
 As the formula show, calculated perturbation is the gradient of loss function regarding the latent representation e. Thus, the direction of adding noise is the direction where loss function increases the most at  the given point e.
 
