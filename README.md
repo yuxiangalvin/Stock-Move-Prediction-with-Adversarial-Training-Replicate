@@ -618,7 +618,7 @@ if __name__ == '__main__':
 
 ### Experiments
 
-I conducted experiment on two datasets: ACL18 & KDD17 as mentioned
+I conducted experiment on two datasets (from jupyter notebook): ACL18 & KDD17 as mentioned using the provided optimal parameters by the original authors
 
 #### ACL18
 
@@ -630,283 +630,73 @@ I conducted experiment on two datasets: ACL18 & KDD17 as mentioned
 !python pred_lstm.py -l 5 -u 4 -l2 1 -f 1
 
 #Adv-ALSTM:
-python pred_lstm.py -l 5 -u 4 -l2 1 -v 1 -rl 1 -q ./saved_model/acl18_alstm/exp -la 0.01 -le 0.05
+!python pred_lstm.py -l 5 -u 4 -l2 1 -v 1 -rl 1 -q ./saved_model/acl18_alstm/exp -la 0.01 -le 0.05
 ```
 
 #### KDD17
 
 ```python
+#LSTM:
+!python pred_lstm.py -p ./data/kdd17/ourpped/ -l 5 -u 4 -l2 0.001 -a 0 -f 1
 
+#ALSTM:
+!python pred_lstm.py -p ./data/kdd17/ourpped/ -l 15 -u 16 -l2 0.001 -f 1
 
+#Adv-ALSTM:
+!python pred_lstm.py -p ./data/kdd17/ourpped/ -l 15 -u 16 -l2 0.001 -v 1 -rl 1 -q ./saved_model/kdd17_alstm/model -la 0.05 -le 0.001 -f 1
 ```
 
-##### Data Read-in & Normalization
-
-The paper authors conducted their second experiment on London Stock Exchange (LSE) LOB dataset. The JNJ dataset and LSE dataset share similar characteristics in their frequency, stock liquidity, etc. Thus I followed the same method for nomalization as that used by authors for LSE dataset. I used the previous 5 days data to normalize the current day' data. This is applied to every day (excluding the first 5 days in the dataset)
+I also did my own grid search to see whether it gives the same optimal parameter combination.
 
 ```python
-# get all trading days in the date range
-nyse = mcal.get_calendar('NYSE')
-dates = list(nyse.schedule(start_date='2020-01-01', end_date='2020-01-09').index)
-dates_str_list = []
-for trading_day in dates:
-    dates_str_list.append(str(trading_day.date()))
 
-# read & store daily LOB data in a dictionary
-daily_data_dict= {}
-for i in range(len(dates_str_list)):
-    date = dates_str_list[i]
-    if date not in daily_data_dict.keys():
-        date = dates_str_list[i]
-        daily_data_dict[date] = np.array(pd.read_csv('./data/JNJ_orderbook/JNJ_' + date + '_34200000_57600000_orderbook_10.csv',header = None))
-
-# get the previous 5 day mean & standard deviation for each trading day and store in dictionaries.
-normalization_mean_dict = {}
-normalization_stddev_dict = {}
-for i in range(5,len(dates_str_list)):
-    date = dates_str_list[i]
-    
-    if (date not in normalization_mean_dict.keys()) or (date not in normalization_stddev_dict.keys()):
-        look_back_dates_list = dates_str_list[(i-5):i]
-        prev_5_day_orderbook_np = None
-        for look_back_date in look_back_dates_list:
-            if prev_5_day_orderbook_np is None:
-                prev_5_day_orderbook_np = daily_data_dict[look_back_date]
-            else:
-                prev_5_day_orderbook_np = np.vstack((prev_5_day_orderbook_np, daily_data_dict[look_back_date]))
-                
-        
-        price_mean = prev_5_day_orderbook_np[:,range(0,prev_5_day_orderbook_np.shape[1],2)].mean()
-        price_std = prev_5_day_orderbook_np[:,range(0,prev_5_day_orderbook_np.shape[1],2)].std()
-        size_mean = prev_5_day_orderbook_np[:,range(1,prev_5_day_orderbook_np.shape[1],2)].mean()
-        size_std = prev_5_day_orderbook_np[:,range(1,prev_5_day_orderbook_np.shape[1],2)].std()
-        
-        normalization_mean_dict[date] = np.repeat([[price_mean,size_mean]], 20, axis=0).flatten()
-        normalization_stddev_dict[date] = np.repeat([[price_std,size_std]], 20, axis=0).flatten()
-
-# normalize each day's data separatly
-daily_norm_data_dict = {}
-for i in range(5,len(dates_str_list)):
-    date = dates_str_list[i]
-    if date not in daily_norm_data_dict.keys():
-        daily_norm_data_dict[date] = (daily_data_dict[date] - normalization_mean_dict[date])/ normalization_stddev_dict[date]
-```
-
-##### Labelling
-
-I applied two adjustions to the author's labelling method.
-
-* mid price is calculated as the weighted mid price using limit order size at the best ask and bid level instead of the simple mid point. This is a mroe accuracte way to calculate theoretical mid price used by quantitative finance companies and researchers.
-
-![mid_adjust](./src/images/mid_adjust.png)
-
-* The category label is labelled through looking at change percentage from current timestep mid-price to future k timestep average mid-price instead of past k to future k. This adjustion makes sure the model could not see part of the change percentage information from input X.
-
-![change_pct_adjust](./src/images/change_pct_adjust.png)
-
-```python       
-# define functions to generate X (appropriate dimension) and y (labelling)
-def moving_average(x, k):
-    return np.convolve(x, np.ones(k), 'valid') / k
-    
-def generate_labels(k, alpha, daily_data_dict):
-    daily_label_dict = {}
-    for date in list(daily_data_dict.keys())[5:]:
-        price_ask = daily_data_dict[date][:,0]
-        size_ask = daily_data_dict[date][:,1]
-        price_bid = daily_data_dict[date][:,2]
-        size_bid = daily_data_dict[date][:,3]
-        mid_price = (price_ask * size_bid + price_bid * size_ask) / (size_ask + size_bid)
-        future_k_avg_mid_price = moving_average(mid_price, k)[1:]
-        change_pct = (future_k_avg_mid_price - mid_price[:-k])/mid_price[:-k]
-        y_label = (-(change_pct < -alpha).astype(int))  + (change_pct > alpha).astype(int)
-        
-        daily_label_dict[date] = y_label.reshape(-1,1)
-    return daily_label_dict
-
-def generate_X_y(k, alpha, timestamp_per_sample, daily_norm_data_dict, daily_data_dict):
-    #k is the number of future timesteps used to generate the label y
-    data_x = None
-    for date in daily_norm_data_dict.keys():
-        if data_x is None:
-            data_x = daily_norm_data_dict[date].copy()[:-k,:]
-        else:
-            data_x = np.vstack((data_x, daily_norm_data_dict[date][:-k,:]))
-    print(data_x.shape)
-    
-    daily_label_dict = generate_labels(k, alpha, daily_data_dict)
-    data_y = None
-    for date in daily_label_dict.keys():
-        if data_y is None:
-            data_y = daily_label_dict[date].copy()
-        else:
-            data_y = np.vstack((data_y, daily_label_dict[date]))
-            
-    [N, P_x] = data_x.shape   
-    x = np.zeros([(N-timestamp_per_sample+1), timestamp_per_sample, P_x])
-    
-    for i in range(N-timestamp_per_sample+1):
-        x[i] = data_x[i:(i+timestamp_per_sample), :]
-        
-    x = x.reshape(x.shape + (1,))
-    y = data_y[(timestamp_per_sample-1):]
-    y = np_utils.to_categorical(y, 3)
-    
-    return x, y
-    
-# generate X and y with k = 8 & alpha = 7e-6 (alpha decided through finding the threshold value that approximately separates data into 3 balanced label categories for the specific k value)
-X,y = generate_X_y(k=8, alpha=7e-6, timestamp_per_sample=100,
-                   daily_norm_data_dict= daily_norm_data_dict, 
-                   daily_data_dict = daily_data_dict)
-# separate into train & validation data (4:1)
-X_train, X_test, y_train, y_test = train_test_split(X,y,test_size = 0.2)
-```
-
-### Model Definition
-
-```python
-def initiate_DeepLOB_model(lookback_timestep, feature_num, conv_filter_num, inception_num, LSTM_num, leaky_relu_alpha,
-                          loss, optimizer, metrics):
-    
-    input_tensor = Input(shape=(lookback_timestep, feature_num, 1))
-    
-    # Conv block1
-    print(input_tensor.shape)
-    conv_layer1 = Conv2D(conv_filter_num, (1,2), strides=(1, 2))(input_tensor)
-    print(conv_layer1.shape)
-    conv_layer1 =LeakyReLU(alpha=leaky_relu_alpha)(conv_layer1)
-    print(conv_layer1.shape)
-    conv_layer1 = Conv2D(conv_filter_num, (4,1), padding='same')(conv_layer1)
-    conv_first1 = LeakyReLU(alpha=leaky_relu_alpha)(conv_layer1)
-    print(conv_layer1.shape)
-    conv_layer1 = Conv2D(conv_filter_num, (4,1), padding='same')(conv_layer1)
-    conv_layer1 = LeakyReLU(alpha=leaky_relu_alpha)(conv_layer1)
-    print(conv_layer1.shape)
-
-    # Conv block2
-    conv_layer2 = Conv2D(conv_filter_num, (1,2), strides=(1, 2))(conv_layer1)
-    conv_layer2 = LeakyReLU(alpha=leaky_relu_alpha)(conv_layer2)
-    print(conv_layer2.shape)
-    conv_layer2 = Conv2D(conv_filter_num, (4,1), padding='same')(conv_layer2)
-    conv_layer2 = LeakyReLU(alpha=leaky_relu_alpha)(conv_layer2)
-    print(conv_layer2.shape)
-    conv_layer2 = Conv2D(conv_filter_num, (4,1), padding='same')(conv_layer2)
-    conv_layer2 = LeakyReLU(alpha=leaky_relu_alpha)(conv_layer2)
-    print(conv_layer2.shape)
-
-    # Conv block3
-    conv_layer3 = Conv2D(conv_filter_num, (1,10))(conv_layer2)
-    conv_layer3 = LeakyReLU(alpha=leaky_relu_alpha)(conv_layer3)
-    print(conv_layer3.shape)
-    conv_layer3 = Conv2D(conv_filter_num, (4,1), padding='same')(conv_layer3)
-    conv_layer3 = LeakyReLU(alpha=leaky_relu_alpha)(conv_layer3)
-    print(conv_layer3.shape)
-    conv_layer3 = Conv2D(conv_filter_num, (4,1), padding='same')(conv_layer3)
-    conv_layer3 = LeakyReLU(alpha=leaky_relu_alpha)(conv_layer3)
-    print(conv_layer3.shape)
-    
-    # Inception module
-    inception_module1 = Conv2D(inception_num, (1,1), padding='same')(conv_layer3)
-    inception_module1 = LeakyReLU(alpha=leaky_relu_alpha)(inception_module1)
-    print(inception_module1.shape)
-    inception_module1 = Conv2D(inception_num, (3,1), padding='same')(inception_module1)
-    inception_module1 = LeakyReLU(alpha=leaky_relu_alpha)(inception_module1)
-    print(inception_module1.shape)
-
-    inception_module2 = Conv2D(inception_num, (1,1), padding='same')(conv_layer3)
-    inception_module2 = LeakyReLU(alpha=leaky_relu_alpha)(inception_module2)
-    print(inception_module2.shape)
-    inception_module2 = Conv2D(inception_num, (5,1), padding='same')(inception_module2)
-    inception_module2 = LeakyReLU(alpha=leaky_relu_alpha)(inception_module2)
-    print(inception_module2.shape)
-
-    inception_module3 = MaxPooling2D((3,1), strides=(1,1), padding='same')(conv_layer3)
-    print(inception_module3.shape)
-    inception_module3 = Conv2D(inception_num, (1,1), padding='same')(inception_module3)
-    print(inception_module3.shape)
-    inception_module3 = LeakyReLU(alpha=leaky_relu_alpha)(inception_module3)
-    print(inception_module3.shape)
-    
-    inception_module_final = concatenate([inception_module1, inception_module2, inception_module3], axis=3)
-    print(inception_module_final.shape)
-    inception_module_final = Reshape((inception_module_final.shape[1], inception_module_final.shape[3]))(inception_module_final)
-    print(inception_module_final.shape)
-
-    # LSTM
-    LSTM_output = LSTM(LSTM_num)(inception_module_final)
-    print(LSTM_output.shape)
-
-    # Fully Connected Layer with softmax activation function for output
-    model_output = Dense(3, activation='softmax')(LSTM_output)
-    print(model_output.shape)
-    
-    DeepLOB_model = Model(inputs=input_tensor, outputs= model_output)  
-    es = EarlyStopping(monitor='val_accuracy', mode='max', verbose=1)
-    
-    DeepLOB_model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
-
-    return DeepLOB_model
-```
-
-### Model Initiation & Training
-
-```
-DeepLOB_model = initiate_DeepLOB_model(lookback_timestep, feature_num, conv_filter_num, inception_num, LSTM_num, leaky_relu_alpha,
-                          loss, optimizer, metrics)
-
-# definte the training stop criteria (no new max validation accuracy in 20 consecutive epochs)
-es = EarlyStopping(monitor='val_accuracy', mode='max', patience = stop_epoch_num, verbose=1)
-DeepLOB_model.fit(X_train, y_train, epochs=num_epoch, batch_size=batch_size, verbose=2, validation_data=(X_test, y_test), callbacks = [es])
 ```
 
 ## Experiments Results
 
-### FI-2010
+Here is the comparison between authors' reported test Accuracy (ACC) and Matthews Correlation Coefficient (MCC) from their experiment with my result using optimal parameters provided by the authors.
 
-Here are the loss and accuracy graphs along the training process of the FI-2010 experiment (k = 20)
+### ACL18
 
-![FI-2010 Loss Graph](./src/images/FI-2010 Loss Graph.png)
-
-![FI-2010 Accuracy Graph](./src/images/FI-2010 Accuracy Graph.png)
-
-According to the graphs, both validation loss and accuracy stops improving after about 60 epochs although training loss and accuracy are still improving and at around 80 epochs the training stops.
-
-Here is the comparison between authors' reported validation accuracy of their experiment with FI-2010 dataset.
-
-| Model| Validation Accuracy|
-| -- | ---- |
-| Author’s Report |78.91%|
-| My Experiment| 73.00%|
-
-The potential reason of this difference could be that I am using only part of the FI-2010 dataset for my experiment so the training data number is not as big as the one the authors used.
-
-To further assess the performance of my model, I also conducted the experiment on the JNJ stock LOB dataset.
-
-### JNJ LOB
-
-Here are the loss and accuracy graphs along the training process of one specific JNJ LOB experiment (k = 8, alpha = 7e-6)
+<figure>
+  <img src="./src/results/ACL18_result.png" title="ACL18_result" />
+  <figcaption>Result Comparison Table - ACL18 Dataset</figcaption>
+</figure>
 
 
-![JNJ Loss Graph](./src/images/JNJ Loss Graph.png)
+### KDD17
 
-![JNJ Accuracy Graph](./src/images/JNJ Accuracy Graph.png)
+<figure>
+  <img src="./src/results/KDD17_result.png" title="KDD17_result" />
+  <figcaption>Result Comparison Table - KDD17 Dataset</figcaption>
+</figure>
 
-|Model |k |Validation Accuracy |Epochs taken|
-| -- | -  | ------- | ----- |
-|Author’s Report on LSE dataset |20 |70.17% |  |
-|Author’s Report on LSE dataset | 50 | 63.93% |  |
-|Author’s Report on LSE dataset | 100|61.52%| |
-|Replicate on JNJ orderbook data |8 |70.28% | 184 |
-|Replicate on JNJ orderbook data |26 |80.50% |113 |
-|Replicate on JNJ orderbook data |80 |77.52%  |32 |
 
-From the result, my experiment result shows high validation accuracy than authors' experiment on LSE dataset. This shows that my replicated model has great performance on the specific JNJ dataset.
+### Observations
+The results from two experiment datasets show the same pattern.
 
-I also notice that as k increases in my experiment, final valdiation accuracy has a rough increasing trend (until certain k value) and the number of epochs taken for training goes down as k increases. However, the valdiation accruacy trend along k is opposite in authors' report. This is an observation that is worth more thinking and research.
+There are two noticable points from both of these results:
+1. The results from my experiments also show that Adv-ALSTM model performs better than ALSTM in both ACC and MCC metrics. LSTM has the worst performance. This matches with the result provided by the authors.
+2. However, the results from my experiments are all not as good as the numbers provided by the authors.
 
-## Next Steps
+I tried to think about potential reasons that could lead to different results. One potential reason could be randomness. However, since my reported result is an average of 150 separate experiments, so is the author's, thus randomness should not cause such a big and consistent difference.
 
-In the next step, I have two plan steps:
+Another possible reason could be that I am not using the same parameters because the authors did not specify whether the provided combination parameters in source code is the optimal one. Thus, I did my own grid search on the ACL18 dataset
 
-* With more computing power allowed, I plan to conduct experiment on larger limit order book dataset on liquid assets
-* Further research on how the value of k affects model performance and find out what tasks the model is most appropriate for.
+### My Grid Search Result
+
+My grid search codes are included in the section above. Here I present my grid search result.
+
+## Challenge
+
+I potentialy would like to use the updated dataset I could access from yahoo Finance. Since the dataset needed only contains open, close, high, low, adjusted close price.
+
+However, since the authors did not clearly provide the definition of 2 of the 11 features they used in the paper, I could not apply the same model and process to a new dataset from the raw data.
+
+It would be a great next step to contact the authors to ask about what their definition for the other 2 features are.
+
+## Next Step
+
+Currently this model is applying a static feature selection method. Compared to many recent papers, the features used are very limited because the authors aim at showing the adversarial training could improve perfromance compared to some popular benchmarks.
+
+However, from my project in CS 496 Advanced Deep Learning, I learned that dynamic feature generation using neural nets could give more powerful predictive power. Thus, I plan to involve a block of neural nets (possibly CNN and an Inception modules) to dynamically extract features.
