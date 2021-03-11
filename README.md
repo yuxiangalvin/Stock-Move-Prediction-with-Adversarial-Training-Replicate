@@ -58,9 +58,13 @@ The days that have the label (from current day to next day's adjusted close) 0 a
 
 #### Feature Generation & Normalization
 
-The paper applies the exact same method for feature generation & normalization as well.
+The paper applies the exact same method to the two dataset for feature generation & normalization as well.
 
-Firstly, instead of using the raw price numbers, the authors used 11 technical features that are commonly used in other papers. Here are the 11 features used:
+Firstly, instead of using the raw price numbers, the authors used 11 technical features that are commonly used in other papers. This process reaches two goals: 
+1. normalize the prices of different stocks; 
+2. explicitly capture the interaction of different prices
+
+Here are the 11 features used:
 
 1. c_open <- movement of the day (from open to close)
 2. c_high <- not specified by the authors, according to the name, it is a feature related to daily high price
