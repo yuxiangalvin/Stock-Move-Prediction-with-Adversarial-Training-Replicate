@@ -3,7 +3,7 @@
 Welcome to my project page! It's time for a round of 'noise' :)
 
 This is a replicate project to conduct experiments of paper 'Enhancing Stock Movement Prediction with Adversarial Training'.
-The original paper's authors are Fuli Feng, Huimin Chen, Xiangnan He, Ji Ding, Maosong Sun and Tat-Seng Chua. The paper is linked here: https://arxiv.org/pdf/1810.09936.pdf
+The original paper's authors are Fuli Feng, Huimin Chen, Xiangnan He, Ji Ding, Maosong Sun and Tat-Seng Chua. The paper is linked here: [Original Paper](https://arxiv.org/pdf/1810.09936.pdf)
 
 ## Project Information
 ### University: Northwestern University
