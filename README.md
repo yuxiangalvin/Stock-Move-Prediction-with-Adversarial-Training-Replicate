@@ -794,13 +794,14 @@ Among all grid search trials, the highest accuracy and mcc combination I found, 
 
 The accuracy is very close and the MCC is not as good but closer compare to before.
 
-## Conclusion
+## Conclusions & Next Steps
 
+### Conlusions
 * The replicated experiment indeed also shows that Adv-ALSTM model performs better than the LSTM and ALSTM models.
 * Through experiments, it is found that, grid search for parameter tuning is not applied well here because of the significant randomness impact
 * The best performance of all experiments with different parameter combinations closely match with author's reported performance.
 
-## Challenge
+### Challenge
 
 I potentialy would like to use the updated dataset I could access from yahoo Finance. Since the dataset needed only contains open, close, high, low, adjusted close price.
 
@@ -808,7 +809,7 @@ However, since the authors did not clearly provide the definition of 2 of the 11
 
 It would be a great next step to contact the authors to ask about what their definition for the other 2 features are.
 
-## Next Step
+### Next Steps
 
 Currently this model is applying a static feature selection method. Compared to many recent papers, the features used are very limited because the authors aim at showing the adversarial training could improve perfromance compared to some popular benchmarks.
 
