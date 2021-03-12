@@ -1,0 +1,45 @@
+Experiment on the ACL18 dataset:
+
+LSTM:
+python pred_lstm.py -a 0 -l 10 -u 32 -l2 10 -f 1
+
+Best Valid performance: {'acc': 0.5675146771037182, 'mcc': 0.11928146646530667}
+Best Test performance: {'acc': 0.5155913978494624, 'mcc': 0.03950782231120037}
+
+
+ALSTM:
+python pred_lstm.py -l 5 -u 4 -l2 1 -f 1
+
+Best Valid performance: {'acc': 0.5279843444227006, 'mcc': 0.07271967850339156}
+Best Test performance: {'acc': 0.55, 'mcc': 0.09950116431250387}
+
+
+Adv-ALSTM:
+python pred_lstm.py -l 5 -u 4 -l2 1 -v 1 -rl 1 -q ./saved_model/acl18_alstm/exp -la 0.01 -le 0.05
+
+Best Valid performance: {'acc': 0.55146771037182, 'mcc': 0.10714507066853574}
+Best Test performance: {'acc': 0.5645161290322581, 'mcc': 0.13097681418607285}
+
+
+
+Experiment on the KDD17 dataset:
+
+LSTM:
+python pred_lstm.py -p ./data/kdd17/ourpped/ -l 5 -u 4 -l2 0.001 -a 0 -f 1
+
+Best Valid performance: {'acc': 0.51908302354399, 'mcc': 0.040846059792436225}
+Best Test performance: {'acc': 0.5060827250608273, 'mcc': 0.009032703115265784}
+
+
+ALSTM:
+python pred_lstm.py -p ./data/kdd17/ourpped/ -l 15 -u 16 -l2 0.001 -f 1
+
+Best Valid performance: {'acc': 0.5096654275092937, 'mcc': 0.036780347094128335}
+Best Test performance: {'acc': 0.5187888618545553, 'mcc': 0.012118636310180196}
+
+
+Adv-ALSTM:
+python pred_lstm.py -p ./data/kdd17/ourpped/ -l 15 -u 16 -l2 0.001 -v 1 -rl 1 -q ./saved_model/kdd17_alstm/model -la 0.05 -le 0.001 -f 1
+
+Best Valid performance: {'acc': 0.5130111524163569, 'mcc': 0.036584554838593054}
+Best Test performance: {'acc': 0.5201405785347392, 'mcc': 0.024504793690409206}
