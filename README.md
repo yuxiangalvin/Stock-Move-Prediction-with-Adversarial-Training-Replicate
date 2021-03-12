@@ -747,7 +747,7 @@ Here is the comparison between authors' reported test Accuracy (ACC) and Matthew
 ### ACL18
 
 <figure>
-  <img src="./src/results/ACL18_result.png" title="ACL18_result" />
+  <img src="./src/outputs/ACL18_result.png" title="ACL18_result" />
   <figcaption>Result Comparison Table - ACL18 Dataset</figcaption>
 </figure>
 
@@ -755,7 +755,7 @@ Here is the comparison between authors' reported test Accuracy (ACC) and Matthew
 ### KDD17
 
 <figure>
-  <img src="./src/results/KDD17_result.png" title="KDD17_result" />
+  <img src="./src/outputs/KDD17_result.png" title="KDD17_result" />
   <figcaption>Result Comparison Table - KDD17 Dataset</figcaption>
 </figure>
 
@@ -776,7 +776,7 @@ Another possible reason could be that I am not using the same parameters because
 My grid search codes are included in the section above. Here I present my grid search result.
 
 <figure>
-  <img src="./src/results/parameter_comparison.png" title="Parameter Comparison Table" />
+  <img src="./src/outputs/parameter_comparison.png" title="Parameter Comparison Table" />
   <figcaption>Parameter Comparison Table</figcaption>
 </figure>
 
@@ -787,7 +787,7 @@ An important observation is that randomness has significant impact on the result
 Among all grid search trials, the highest accuracy and mcc combination I found, compared to the best one provided by the authors is shown below in the table.
 
 <figure>
-  <img src="./src/results/best_compare.png" title="Best Result Compare Table" />
+  <img src="./src/outputs/best_compare.png" title="Best Result Compare Table" />
   <figcaption>Best Result Compare Table</figcaption>
 </figure>
 
