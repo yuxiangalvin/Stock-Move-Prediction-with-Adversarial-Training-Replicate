@@ -18,7 +18,9 @@ The original paper's authors are Fuli Feng, Huimin Chen, Xiangnan He, Ji Ding, M
   Here is my [GitHub Repository](https://github.com/yuxiangalvin/Stock-Move-Prediction-with-Adversarial-Training-Replicate-Project).
   
   This repo contains the codes provided by the authors and my experiment results.
-  
+
+### Youtube Video Presentation
+  Here is the link to my presentation about this replicate project: [Presentation Video](https://youtu.be/elPtVduREak)
 ## Relevance & Innovation
 
 ### Why
@@ -626,7 +628,7 @@ if __name__ == '__main__':
 
 I conducted experiment on two datasets (from jupyter notebook): ACL18 & KDD17 as mentioned using the provided optimal parameters by the original authors
 
-The results of the code below is in record.txt.
+The results and the of the code below are in src/outputs/record.txt.
 
 #### ACL18
 ```python
@@ -768,9 +770,7 @@ There are two noticable points from both of these results:
 1. The results from my experiments also show that Adv-ALSTM model performs better than ALSTM in both ACC and MCC metrics. LSTM has the worst performance. This matches with the result provided by the authors.
 2. However, the results from my experiments are all not as good as the numbers provided by the authors.
 
-I tried to think about potential reasons that could lead to different results. One potential reason could be randomness. However, since my reported result is an average of 150 separate experiments, so is the author's, thus randomness should not cause such a big and consistent difference.
-
-Another possible reason could be that I am not using the same parameters because the authors did not specify whether the provided combination parameters in source code is the optimal one. Thus, I did my own grid search on the ACL18 dataset
+I tried to think about potential reasons that could lead to different results. One possible reason could be that I am not using the same parameters because the authors did not specify whether the provided combination parameters in source code is the optimal one. Thus, I did my own grid search on the ACL18 dataset.
 
 ### My Grid Search Result
 
