@@ -111,6 +111,8 @@ The final input into the model is a D x T matrix with D = 11 (feature number), T
 
 The model contains 4 layers. Here is a picture that shows the whole structure of the model with my anotated formulas and explanations.
 
+The graph and annotations should be read from bottom to top. The annotations explained the formula used at the layer and the function of the layer claimed by the authors.
+
 ![whole_model](./src/images/whole_model.png)
 
 ### Adversarial Training
@@ -686,6 +688,30 @@ Another possible reason could be that I am not using the same parameters because
 ### My Grid Search Result
 
 My grid search codes are included in the section above. Here I present my grid search result.
+
+<figure>
+  <img src="./src/results/parameter_comparison.png" title="Parameter Comparison Table" />
+  <figcaption>Parameter Comparison Table</figcaption>
+</figure>
+
+As we can see, the parameter combination found is different from the one provided by the author.
+
+An important observation is that randomness has significant impact on the result accuracy and mcc value. Thus, the best grid search result combination keep changing. This de-validates the grid search approach to some extent.
+
+Among all grid search trials, the highest accuracy and mcc combination I found, compared to the best one provided by the authors is shown below in the table.
+
+<figure>
+  <img src="./src/results/best_compare.png" title="Best Result Compare Table" />
+  <figcaption>Best Result Compare Table</figcaption>
+</figure>
+
+The accuracy is very close and the MCC is not as good but closer compare to before.
+
+## Conclusion
+
+* The replicated experiment indeed also shows that Adv-ALSTM model performs better than the LSTM and ALSTM models.
+* Through experiments, it is found that, grid search for parameter tuning is not applied well here because of the significant randomness impact
+* The best performance of all experiments with different parameter combinations closely match with author's reported performance.
 
 ## Challenge
 
