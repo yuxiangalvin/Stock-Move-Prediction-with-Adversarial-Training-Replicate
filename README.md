@@ -146,6 +146,7 @@ Alpha is a paramter to weight regularizer loss term. So the loss function involv
 ## My Experiments & Codes
 
 ### Import Libraries
+This is part of the code used from pred_lstm.py.
 ```python
 import argparse
 import copy
@@ -161,6 +162,7 @@ from load import load_cla_data
 ```
 
 ### Model & Traning
+This is part of the code used from pred_lstm.py.
 ```python
 class AWLSTM:
     def __init__(self, data_path, model_path, model_save_path, parameters, steps=1, epochs=50,
@@ -533,6 +535,7 @@ class AWLSTM:
 ```
 
 ### Input Parser & Run
+This is part of the code used from pred_lstm.py.
 ```python
 if __name__ == '__main__':
     desc = 'the lstm model'
@@ -622,8 +625,9 @@ if __name__ == '__main__':
 
 I conducted experiment on two datasets (from jupyter notebook): ACL18 & KDD17 as mentioned using the provided optimal parameters by the original authors
 
-#### ACL18
+The results of the code below is in record.txt.
 
+#### ACL18
 ```python
 #LSTM:
 !python pred_lstm.py -a 0 -l 10 -u 32 -l2 10 -f 1
@@ -649,11 +653,93 @@ I conducted experiment on two datasets (from jupyter notebook): ACL18 & KDD17 as
 ```
 
 I also did my own grid search to see whether it gives the same optimal parameter combination.
+(These are codes from grid_search_experiment.ipynb)
 
+##### Step 1
 ```python
+#grid search params
+T_list = [str(x) for x in [2, 3, 4, 5, 10, 15]]
+U_list = [str(x) for x in [4,8,16,32]]
+l2_alpha_list = [str(x) for x in [0.001,0.01, 0.1, 1]]
 
+result_dict = {}
+adv_a = '0.01'
+adv_e = '0.05'
+max_acc = 0
+max_mcc = -1
+max_acc_combo = ''
+max_mcc_combo = ''
+count = 0
+total = len(T_list) * len(U_list) * len(l2_alpha_list)
+for T in T_list:
+    for LSTM_U in U_list:
+        for l2_alpha in l2_alpha_list:
+            key = str(T) + ' ' + str(LSTM_U) + ' ' + str(l2_alpha)
+            if key not in result_dict.keys():
+                results = !python pred_lstm.py -l {T} -u {LSTM_U} -l2 {l2_alpha} -v 1 -la {adv_a} -le {adv_e}
+                acc = float(results[-2])
+                mcc = float(results[-1])
+                result_dict[key] = [acc, mcc]
+            else:
+                acc = result_dict[key][0]
+                mcc = result_dict[key][1]
+            if (acc > max_acc):
+                max_acc_combo = key
+                max_acc = acc
+            if (mcc > max_mcc):
+                max_mcc_combo = key
+                max_mcc = mcc
+            count += 1
+            print(count,'/',total)
+print(max_acc_combo)
+print(result_dict[max_acc_combo])
 ```
 
+##### Step 2
+```python
+#grid search params for beta & epsilon (step 2)
+T = '15'
+LSTM_U = '4'
+l2_alpha = '0.1'
+adv_a_list = [str(x) for x in [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]]
+adv_e_list = [str(x) for x in [0.001, 0.005, 0.01, 0.05, 0.1]]
+
+result_dict2 = {}
+result_dict_test = {}
+
+max_acc2 = 0
+max_mcc2 = -1
+max_acc_combo2 = ''
+max_mcc_combo2 = ''
+count = 0
+total = len(adv_a_list) * len(adv_e_list)
+for adv_a in adv_a_list:
+    for adv_e in adv_e_list:
+        key = ' '.join([T, LSTM_U, l2_alpha, adv_a, adv_e])
+        if key not in result_dict2.keys():
+            results = !python pred_lstm.py -l {T} -u {LSTM_U} -l2 {l2_alpha} -v 1 -la {adv_a} -le {adv_e}
+            val_acc = float(results[-4])
+            val_mcc = float(results[-3])
+            test_acc = float(results[-2])
+            test_mcc = float(results[-1])
+            result_dict2[key] = [val_acc, val_mcc]
+            result_dict_test[key] = [test_acc, test_mcc]
+        else:
+            val_acc = result_dict2[key][0]
+            val_mcc = result_dict2[key][1]
+            test_acc = result_dict_test[key][0]
+            test_mcc = result_dict_test[key][1]
+        if (val_acc > max_acc2):
+            max_acc_combo2 = key
+            max_acc2 = val_acc
+        if (val_mcc > max_mcc2):
+            max_mcc_combo2 = key
+            max_mcc2 = val_mcc
+        count += 1
+        print(count,'/',total)
+print(max_acc_combo2)
+print(result_dict2[max_acc_combo2])
+```
 ## Experiments Results
 
 Here is the comparison between authors' reported test Accuracy (ACC) and Matthews Correlation Coefficient (MCC) from their experiment with my result using optimal parameters provided by the authors.
