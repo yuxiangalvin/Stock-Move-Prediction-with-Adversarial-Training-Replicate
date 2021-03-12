@@ -23,8 +23,9 @@ The original paper's authors are Fuli Feng, Huimin Chen, Xiangnan He, Ji Ding, M
 
 ### Why
 
-One primary group of the typical input features to stock prediction tasks are typically based on stock price, which is a stochastic variable and continuously changed with time by nature. Thus, normal training with static price-based features can easily overfit the data, being insufficient to obtain reliable models. 
-This paper develops a new method of involving adversarial training into the training process of stock daily movement prediction. 
+One primary group of the typical input features to stock prediction tasks are typically based on stock price, which is a stochastic variable and continuously changed with time by nature. Thus, normal training with static price-based features can easily overfit the data, being insufficient to obtain reliable models that perform well on the testing and validaiton set. The picture below is a typical example that could be caused by this problem.
+
+![pain](./src/images/pain.png)
 
 ### What
 
